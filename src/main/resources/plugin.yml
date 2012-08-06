@@ -1,0 +1,7 @@
+name: StuzzSupport
+version: ${project.version}
+author: Nightgunner5
+
+description: 'Allows StuzzHosting support staff to self-op. You are allowed to remove this plugin, but it will make it harder for us to help you.'
+
+main: com.stuzzhosting.support.Main
