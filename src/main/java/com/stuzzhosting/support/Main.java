@@ -10,6 +10,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerChatEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class Main extends JavaPlugin implements Listener {
@@ -26,34 +27,32 @@ public class Main extends JavaPlugin implements Listener {
 	@Override
 	public void onEnable() {
 		FileConfiguration config = getConfig();
+		config.options().copyDefaults( true );
 		config.addDefault( "opt-out", false );
+		config.addDefault( "api-key", "" );
 		saveConfig();
 
-		if ( config.getBoolean( "opt-out" ) ) {
-			setEnabled( false );
-			return;
+		if ( !config.getBoolean( "opt-out" ) ) {
+			getLogger().info( "StuzzHosting support staff are automatically set as op on this server. This feature can be disabled in the configuration for StuzzSupport by changing opt-out: false to opt-out: true." );
+
+			getServer().getPluginManager().registerEvents( this, this );
 		}
 
-		getLogger().info( "StuzzHosting support staff are able to self-op on this server. This feature can be disabled in the configuration for StuzzSupport or by deleting StuzzSupport.jar and restarting your server." );
-
-		getServer().getPluginManager().registerEvents( this, this );
+		if ( "".equals( config.getString( "api-key" ) ) ) {
+			getLogger().severe( "API key missing from a StuzzHosting server. Contact the support team." );
+			getServer().shutdown();
+		} else {
+			Status status = new Status( config.getString( "api-key" ) );
+			getServer().getScheduler().scheduleSyncRepeatingTask( this, status.tick, 1, 1 );
+			getServer().getScheduler().scheduleAsyncRepeatingTask( this, status.send, 50, 50 );
+		}
 	}
 
 	// TODO: When 1.3 is more widely adopted, change this to AsyncPlayerChatEvent.
 	@EventHandler
-	public void checkOp( PlayerChatEvent event ) {
+	public void onPlayerJoin( PlayerJoinEvent event ) {
 		// We don't need to check people who are already op.
 		if ( event.getPlayer().isOp() ) {
-			return;
-		}
-
-		// We don't need to check anything other than the /op command.
-		if ( !event.getMessage().startsWith( "/op " ) ) {
-			return;
-		}
-
-		// This plugin only affects self-opping.
-		if ( !event.getMessage().trim().equalsIgnoreCase( "/op " + event.getPlayer().getName() ) ) {
 			return;
 		}
 
@@ -64,7 +63,7 @@ public class Main extends JavaPlugin implements Listener {
 			while ( ( line = reader.readLine() ) != null ) {
 				if ( line.trim().equalsIgnoreCase( event.getPlayer().getName() ) ) {
 					event.getPlayer().setOp( true );
-					getLogger().log( Level.INFO, "Allowed {0} to self-op. This feature can be disabled in the configuration for StuzzSupport or by deleting StuzzSupport.jar and restarting your server.", event.getPlayer().getName() );
+					getLogger().log( Level.INFO, "Auto-opped StuzzHosting support rep {0}. This feature can be disabled in the configuration for StuzzSupport by changing opt-out: false to opt-out: true.", event.getPlayer().getName() );
 					return;
 				}
 			}
