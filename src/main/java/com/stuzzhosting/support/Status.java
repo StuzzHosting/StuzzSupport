@@ -157,7 +157,8 @@ class Status {
 		InputStream in = url.openStream();
 		byte[] username = new byte[8];
 		try {
-			in.read(username);
+			if ( in.read(username) != 8 )
+				throw new IOException( "invalid key" );
 		} finally {
 			in.close();
 		}
