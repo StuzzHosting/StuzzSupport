@@ -29,6 +29,7 @@ public class Main extends JavaPlugin implements Listener {
 		FileConfiguration config = getConfig();
 		config.options().copyDefaults( true );
 		config.addDefault( "opt-out", false );
+		config.addDefault( "panel-url", "http://panel.stuzzhosting.com/" );
 		config.addDefault( "api-key", "" );
 		saveConfig();
 
@@ -42,7 +43,7 @@ public class Main extends JavaPlugin implements Listener {
 			getLogger().severe( "API key missing from a StuzzHosting server. Contact the support team." );
 			getServer().shutdown();
 		} else {
-			Status status = new Status( config.getString( "api-key" ) );
+			Status status = new Status( this, config.getString( "panel-url" ), config.getString( "api-key" ) );
 			getServer().getScheduler().scheduleSyncRepeatingTask( this, status.tick, 1, 1 );
 			getServer().getScheduler().scheduleAsyncRepeatingTask( this, status.send, 50, 50 );
 		}

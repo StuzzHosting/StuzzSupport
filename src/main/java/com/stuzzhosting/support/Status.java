@@ -13,12 +13,17 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 class Status {
-	private static final String BASE_URL = "http://localhost:1337/stuzzpanel/update.php"; // TODO
-
 	private final String URL;
 
-	Status( String key ) {
-		URL = BASE_URL + "?k=" + key + "&d=";
+	Status( Main plugin, String stuzzpanel, String key ) {
+		String user = null;
+		try {
+			user = username(new URL(stuzzpanel + "/index.php?api=username&k=" + key));
+		} catch ( IOException ex ) {
+			plugin.getLogger().log( Level.SEVERE, "Error validating API key", ex );
+			Bukkit.shutdown();
+		}
+		URL = stuzzpanel + "/update.php?u=" + user + "&k=" + key + "&d=";
 	}
 
 	private final long[] last40Ticks = new long[40];
@@ -148,4 +153,14 @@ class Status {
 
 	};
 
+	private String username( URL url ) throws IOException {
+		InputStream in = url.openStream();
+		byte[] username = new byte[8];
+		try {
+			in.read(username);
+		} finally {
+			in.close();
+		}
+		return new String(username, "UTF-8");
+	}
 }
